@@ -67,19 +67,81 @@ func (m *EndDeviceBrand) ValidateFields(paths ...string) error {
 			}
 
 		case "name":
-			// no validation rules for Name
+
+			if utf8.RuneCountInString(m.GetName()) > 100 {
+				return EndDeviceBrandValidationError{
+					field:  "name",
+					reason: "value length must be at most 100 runes",
+				}
+			}
+
 		case "private_enterprise_number":
 			// no validation rules for PrivateEnterpriseNumber
 		case "organization_unique_identifiers":
 
+			for idx, item := range m.GetOrganizationUniqueIdentifiers() {
+				_, _ = idx, item
+
+				if !_EndDeviceBrand_OrganizationUniqueIdentifiers_Pattern.MatchString(item) {
+					return EndDeviceBrandValidationError{
+						field:  fmt.Sprintf("organization_unique_identifiers[%v]", idx),
+						reason: "value does not match regex pattern \"[0-9A-F]{6}\"",
+					}
+				}
+
+			}
+
 		case "lora_alliance_vendor_id":
-			// no validation rules for LoraAllianceVendorId
+
+			if val := m.GetLoraAllianceVendorId(); val < 0 || val > 65535 {
+				return EndDeviceBrandValidationError{
+					field:  "lora_alliance_vendor_id",
+					reason: "value must be inside range [0, 65535]",
+				}
+			}
+
 		case "website":
-			// no validation rules for Website
+
+			if m.GetWebsite() != "" {
+
+				if uri, err := url.Parse(m.GetWebsite()); err != nil {
+					return EndDeviceBrandValidationError{
+						field:  "website",
+						reason: "value must be a valid URI",
+						cause:  err,
+					}
+				} else if !uri.IsAbs() {
+					return EndDeviceBrandValidationError{
+						field:  "website",
+						reason: "value must be absolute",
+					}
+				}
+
+			}
+
 		case "email":
-			// no validation rules for Email
+
+			if m.GetEmail() != "" {
+
+				if err := m._validateEmail(m.GetEmail()); err != nil {
+					return EndDeviceBrandValidationError{
+						field:  "email",
+						reason: "value must be a valid email address",
+						cause:  err,
+					}
+				}
+
+			}
+
 		case "logo":
-			// no validation rules for Logo
+
+			if !_EndDeviceBrand_Logo_Pattern.MatchString(m.GetLogo()) {
+				return EndDeviceBrandValidationError{
+					field:  "logo",
+					reason: "value does not match regex pattern \"^$|^(([a-z0-9-]+\\\\/)+)?([a-z0-9_-]+\\\\.)+(png|svg)$\"",
+				}
+			}
+
 		default:
 			return EndDeviceBrandValidationError{
 				field:  name,
@@ -88,6 +150,56 @@ func (m *EndDeviceBrand) ValidateFields(paths ...string) error {
 		}
 	}
 	return nil
+}
+
+func (m *EndDeviceBrand) _validateHostname(host string) error {
+	s := strings.ToLower(strings.TrimSuffix(host, "."))
+
+	if len(host) > 253 {
+		return errors.New("hostname cannot exceed 253 characters")
+	}
+
+	for _, part := range strings.Split(s, ".") {
+		if l := len(part); l == 0 || l > 63 {
+			return errors.New("hostname part must be non-empty and cannot exceed 63 characters")
+		}
+
+		if part[0] == '-' {
+			return errors.New("hostname parts cannot begin with hyphens")
+		}
+
+		if part[len(part)-1] == '-' {
+			return errors.New("hostname parts cannot end with hyphens")
+		}
+
+		for _, r := range part {
+			if (r < 'a' || r > 'z') && (r < '0' || r > '9') && r != '-' {
+				return fmt.Errorf("hostname parts can only contain alphanumeric characters or hyphens, got %q", string(r))
+			}
+		}
+	}
+
+	return nil
+}
+
+func (m *EndDeviceBrand) _validateEmail(addr string) error {
+	a, err := mail.ParseAddress(addr)
+	if err != nil {
+		return err
+	}
+	addr = a.Address
+
+	if len(addr) > 254 {
+		return errors.New("email addresses cannot exceed 254 characters")
+	}
+
+	parts := strings.SplitN(addr, "@", 2)
+
+	if len(parts[0]) > 64 {
+		return errors.New("email address local phrase cannot exceed 64 characters")
+	}
+
+	return m._validateHostname(parts[1])
 }
 
 // EndDeviceBrandValidationError is the validation error returned by
@@ -146,6 +258,10 @@ var _ interface {
 
 var _EndDeviceBrand_BrandId_Pattern = regexp.MustCompile("^[a-z0-9](?:[-]?[a-z0-9]){2,}$")
 
+var _EndDeviceBrand_OrganizationUniqueIdentifiers_Pattern = regexp.MustCompile("[0-9A-F]{6}")
+
+var _EndDeviceBrand_Logo_Pattern = regexp.MustCompile("^$|^(([a-z0-9-]+\\/)+)?([a-z0-9_-]+\\.)+(png|svg)$")
+
 // ValidateFields checks the field values on EndDeviceModel with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, an error is returned.
@@ -195,10 +311,10 @@ func (m *EndDeviceModel) ValidateFields(paths ...string) error {
 
 		case "name":
 
-			if utf8.RuneCountInString(m.GetName()) > 50 {
+			if utf8.RuneCountInString(m.GetName()) > 100 {
 				return EndDeviceModelValidationError{
 					field:  "name",
-					reason: "value length must be at most 50 runes",
+					reason: "value length must be at most 100 runes",
 				}
 			}
 
@@ -296,11 +412,48 @@ func (m *EndDeviceModel) ValidateFields(paths ...string) error {
 			}
 
 		case "ip_code":
-			// no validation rules for IpCode
+
+			if !_EndDeviceModel_IpCode_Pattern.MatchString(m.GetIpCode()) {
+				return EndDeviceModelValidationError{
+					field:  "ip_code",
+					reason: "value does not match regex pattern \"^$|^IP[X0-6][X0-9]K?C?D?f?H?M?S?W?$\"",
+				}
+			}
+
 		case "key_provisioning":
 
+			_EndDeviceModel_KeyProvisioning_Unique := make(map[KeyProvisioning]struct{}, len(m.GetKeyProvisioning()))
+
+			for idx, item := range m.GetKeyProvisioning() {
+				_, _ = idx, item
+
+				if _, exists := _EndDeviceModel_KeyProvisioning_Unique[item]; exists {
+					return EndDeviceModelValidationError{
+						field:  fmt.Sprintf("key_provisioning[%v]", idx),
+						reason: "repeated value must contain unique items",
+					}
+				} else {
+					_EndDeviceModel_KeyProvisioning_Unique[item] = struct{}{}
+				}
+
+				if _, ok := KeyProvisioning_name[int32(item)]; !ok {
+					return EndDeviceModelValidationError{
+						field:  fmt.Sprintf("key_provisioning[%v]", idx),
+						reason: "value must be one of the defined enum values",
+					}
+				}
+
+			}
+
 		case "key_security":
-			// no validation rules for KeySecurity
+
+			if _, ok := KeySecurity_name[int32(m.GetKeySecurity())]; !ok {
+				return EndDeviceModelValidationError{
+					field:  "key_security",
+					reason: "value must be one of the defined enum values",
+				}
+			}
+
 		case "photos":
 
 			if v, ok := interface{}(m.GetPhotos()).(interface{ ValidateFields(...string) error }); ok {
@@ -326,9 +479,43 @@ func (m *EndDeviceModel) ValidateFields(paths ...string) error {
 			}
 
 		case "product_url":
-			// no validation rules for ProductUrl
+
+			if m.GetProductUrl() != "" {
+
+				if uri, err := url.Parse(m.GetProductUrl()); err != nil {
+					return EndDeviceModelValidationError{
+						field:  "product_url",
+						reason: "value must be a valid URI",
+						cause:  err,
+					}
+				} else if !uri.IsAbs() {
+					return EndDeviceModelValidationError{
+						field:  "product_url",
+						reason: "value must be absolute",
+					}
+				}
+
+			}
+
 		case "datasheet_url":
-			// no validation rules for DatasheetUrl
+
+			if m.GetDatasheetUrl() != "" {
+
+				if uri, err := url.Parse(m.GetDatasheetUrl()); err != nil {
+					return EndDeviceModelValidationError{
+						field:  "datasheet_url",
+						reason: "value must be a valid URI",
+						cause:  err,
+					}
+				} else if !uri.IsAbs() {
+					return EndDeviceModelValidationError{
+						field:  "datasheet_url",
+						reason: "value must be absolute",
+					}
+				}
+
+			}
+
 		case "resellers":
 
 			for idx, item := range m.GetResellers() {
@@ -359,6 +546,29 @@ func (m *EndDeviceModel) ValidateFields(paths ...string) error {
 			}
 
 		case "additional_radios":
+
+			_EndDeviceModel_AdditionalRadios_Unique := make(map[string]struct{}, len(m.GetAdditionalRadios()))
+
+			for idx, item := range m.GetAdditionalRadios() {
+				_, _ = idx, item
+
+				if _, exists := _EndDeviceModel_AdditionalRadios_Unique[item]; exists {
+					return EndDeviceModelValidationError{
+						field:  fmt.Sprintf("additional_radios[%v]", idx),
+						reason: "repeated value must contain unique items",
+					}
+				} else {
+					_EndDeviceModel_AdditionalRadios_Unique[item] = struct{}{}
+				}
+
+				if utf8.RuneCountInString(item) > 50 {
+					return EndDeviceModelValidationError{
+						field:  fmt.Sprintf("additional_radios[%v]", idx),
+						reason: "value length must be at most 50 runes",
+					}
+				}
+
+			}
 
 		default:
 			return EndDeviceModelValidationError{
@@ -428,6 +638,8 @@ var _EndDeviceModel_BrandId_Pattern = regexp.MustCompile("^[a-z0-9](?:[-]?[a-z0-
 
 var _EndDeviceModel_ModelId_Pattern = regexp.MustCompile("^[a-z0-9](?:[-]?[a-z0-9]){2,}$")
 
+var _EndDeviceModel_IpCode_Pattern = regexp.MustCompile("^$|^IP[X0-6][X0-9]K?C?D?f?H?M?S?W?$")
+
 // ValidateFields checks the field values on GetEndDeviceBrandRequest with the
 // rules defined in the proto definition for this message. If any rules are
 // violated, an error is returned.
@@ -445,7 +657,7 @@ func (m *GetEndDeviceBrandRequest) ValidateFields(paths ...string) error {
 		switch name {
 		case "application_ids":
 
-			if v, ok := interface{}(&m.ApplicationIds).(interface{ ValidateFields(...string) error }); ok {
+			if v, ok := interface{}(m.GetApplicationIds()).(interface{ ValidateFields(...string) error }); ok {
 				if err := v.ValidateFields(subs...); err != nil {
 					return GetEndDeviceBrandRequestValidationError{
 						field:  "application_ids",
@@ -569,7 +781,7 @@ func (m *ListEndDeviceBrandsRequest) ValidateFields(paths ...string) error {
 		switch name {
 		case "application_ids":
 
-			if v, ok := interface{}(&m.ApplicationIds).(interface{ ValidateFields(...string) error }); ok {
+			if v, ok := interface{}(m.GetApplicationIds()).(interface{ ValidateFields(...string) error }); ok {
 				if err := v.ValidateFields(subs...); err != nil {
 					return ListEndDeviceBrandsRequestValidationError{
 						field:  "application_ids",
@@ -712,7 +924,7 @@ func (m *GetEndDeviceModelRequest) ValidateFields(paths ...string) error {
 		switch name {
 		case "application_ids":
 
-			if v, ok := interface{}(&m.ApplicationIds).(interface{ ValidateFields(...string) error }); ok {
+			if v, ok := interface{}(m.GetApplicationIds()).(interface{ ValidateFields(...string) error }); ok {
 				if err := v.ValidateFields(subs...); err != nil {
 					return GetEndDeviceModelRequestValidationError{
 						field:  "application_ids",
@@ -854,7 +1066,7 @@ func (m *ListEndDeviceModelsRequest) ValidateFields(paths ...string) error {
 		switch name {
 		case "application_ids":
 
-			if v, ok := interface{}(&m.ApplicationIds).(interface{ ValidateFields(...string) error }); ok {
+			if v, ok := interface{}(m.GetApplicationIds()).(interface{ ValidateFields(...string) error }); ok {
 				if err := v.ValidateFields(subs...); err != nil {
 					return ListEndDeviceModelsRequestValidationError{
 						field:  "application_ids",
@@ -1017,7 +1229,7 @@ func (m *GetTemplateRequest) ValidateFields(paths ...string) error {
 		switch name {
 		case "application_ids":
 
-			if v, ok := interface{}(&m.ApplicationIds).(interface{ ValidateFields(...string) error }); ok {
+			if v, ok := interface{}(m.GetApplicationIds()).(interface{ ValidateFields(...string) error }); ok {
 				if err := v.ValidateFields(subs...); err != nil {
 					return GetTemplateRequestValidationError{
 						field:  "application_ids",
@@ -1122,7 +1334,7 @@ func (m *GetPayloadFormatterRequest) ValidateFields(paths ...string) error {
 		switch name {
 		case "application_ids":
 
-			if v, ok := interface{}(&m.ApplicationIds).(interface{ ValidateFields(...string) error }); ok {
+			if v, ok := interface{}(m.GetApplicationIds()).(interface{ ValidateFields(...string) error }); ok {
 				if err := v.ValidateFields(subs...); err != nil {
 					return GetPayloadFormatterRequestValidationError{
 						field:  "application_ids",
@@ -1946,11 +2158,25 @@ func (m *EndDeviceModel_HardwareVersion) ValidateFields(paths ...string) error {
 		_ = subs
 		switch name {
 		case "version":
-			// no validation rules for Version
+
+			if utf8.RuneCountInString(m.GetVersion()) > 50 {
+				return EndDeviceModel_HardwareVersionValidationError{
+					field:  "version",
+					reason: "value length must be at most 50 runes",
+				}
+			}
+
 		case "numeric":
 			// no validation rules for Numeric
 		case "part_number":
-			// no validation rules for PartNumber
+
+			if utf8.RuneCountInString(m.GetPartNumber()) > 50 {
+				return EndDeviceModel_HardwareVersionValidationError{
+					field:  "part_number",
+					reason: "value length must be at most 50 runes",
+				}
+			}
+
 		default:
 			return EndDeviceModel_HardwareVersionValidationError{
 				field:  name,
@@ -2034,10 +2260,29 @@ func (m *EndDeviceModel_FirmwareVersion) ValidateFields(paths ...string) error {
 		_ = subs
 		switch name {
 		case "version":
-			// no validation rules for Version
+
+			if utf8.RuneCountInString(m.GetVersion()) > 50 {
+				return EndDeviceModel_FirmwareVersionValidationError{
+					field:  "version",
+					reason: "value length must be at most 50 runes",
+				}
+			}
+
 		case "numeric":
 			// no validation rules for Numeric
 		case "supported_hardware_versions":
+
+			for idx, item := range m.GetSupportedHardwareVersions() {
+				_, _ = idx, item
+
+				if utf8.RuneCountInString(item) > 50 {
+					return EndDeviceModel_FirmwareVersionValidationError{
+						field:  fmt.Sprintf("supported_hardware_versions[%v]", idx),
+						reason: "value length must be at most 50 runes",
+					}
+				}
+
+			}
 
 		case "profiles":
 
@@ -2283,7 +2528,14 @@ func (m *EndDeviceModel_Battery) ValidateFields(paths ...string) error {
 			}
 
 		case "type":
-			// no validation rules for Type
+
+			if utf8.RuneCountInString(m.GetType()) > 100 {
+				return EndDeviceModel_BatteryValidationError{
+					field:  "type",
+					reason: "value length must be at most 100 runes",
+				}
+			}
+
 		default:
 			return EndDeviceModel_BatteryValidationError{
 				field:  name,
@@ -2472,8 +2724,38 @@ func (m *EndDeviceModel_Photos) ValidateFields(paths ...string) error {
 		_ = subs
 		switch name {
 		case "main":
-			// no validation rules for Main
+
+			if !_EndDeviceModel_Photos_Main_Pattern.MatchString(m.GetMain()) {
+				return EndDeviceModel_PhotosValidationError{
+					field:  "main",
+					reason: "value does not match regex pattern \"^$|^(([a-z0-9-]+\\\\/)+)?([a-z0-9_-]+\\\\.)+(png|jpg|jpeg)$\"",
+				}
+			}
+
 		case "other":
+
+			_EndDeviceModel_Photos_Other_Unique := make(map[string]struct{}, len(m.GetOther()))
+
+			for idx, item := range m.GetOther() {
+				_, _ = idx, item
+
+				if _, exists := _EndDeviceModel_Photos_Other_Unique[item]; exists {
+					return EndDeviceModel_PhotosValidationError{
+						field:  fmt.Sprintf("other[%v]", idx),
+						reason: "repeated value must contain unique items",
+					}
+				} else {
+					_EndDeviceModel_Photos_Other_Unique[item] = struct{}{}
+				}
+
+				if !_EndDeviceModel_Photos_Other_Pattern.MatchString(item) {
+					return EndDeviceModel_PhotosValidationError{
+						field:  fmt.Sprintf("other[%v]", idx),
+						reason: "value does not match regex pattern \"^$|^(([a-z0-9-]+\\\\/)+)?([a-z0-9_-]+\\\\.)+(png|jpg|jpeg)$\"",
+					}
+				}
+
+			}
 
 		default:
 			return EndDeviceModel_PhotosValidationError{
@@ -2541,6 +2823,10 @@ var _ interface {
 	ErrorName() string
 } = EndDeviceModel_PhotosValidationError{}
 
+var _EndDeviceModel_Photos_Main_Pattern = regexp.MustCompile("^$|^(([a-z0-9-]+\\/)+)?([a-z0-9_-]+\\.)+(png|jpg|jpeg)$")
+
+var _EndDeviceModel_Photos_Other_Pattern = regexp.MustCompile("^$|^(([a-z0-9-]+\\/)+)?([a-z0-9_-]+\\.)+(png|jpg|jpeg)$")
+
 // ValidateFields checks the field values on EndDeviceModel_Videos with the
 // rules defined in the proto definition for this message. If any rules are
 // violated, an error is returned.
@@ -2557,8 +2843,38 @@ func (m *EndDeviceModel_Videos) ValidateFields(paths ...string) error {
 		_ = subs
 		switch name {
 		case "main":
-			// no validation rules for Main
+
+			if !_EndDeviceModel_Videos_Main_Pattern.MatchString(m.GetMain()) {
+				return EndDeviceModel_VideosValidationError{
+					field:  "main",
+					reason: "value does not match regex pattern \"^(?:https?:\\\\/\\\\/(?:www\\\\.)?youtu(?:be\\\\.com\\\\/watch\\\\?v=|\\\\.be\\\\/)(?:[\\\\w\\\\-_]*)(?:&(amp;)?[\\\\w\\\\?=]*)?)$|^(?:https?:\\\\/\\\\/(?:www\\\\.)?vimeo\\\\.com\\\\/(?:channels\\\\/(?:\\\\w+\\\\/)?|groups\\\\/([^\\\\/]*)\\\\/videos\\\\/|)(?:\\\\d+)(?:|\\\\/\\\\?))$\"",
+				}
+			}
+
 		case "other":
+
+			_EndDeviceModel_Videos_Other_Unique := make(map[string]struct{}, len(m.GetOther()))
+
+			for idx, item := range m.GetOther() {
+				_, _ = idx, item
+
+				if _, exists := _EndDeviceModel_Videos_Other_Unique[item]; exists {
+					return EndDeviceModel_VideosValidationError{
+						field:  fmt.Sprintf("other[%v]", idx),
+						reason: "repeated value must contain unique items",
+					}
+				} else {
+					_EndDeviceModel_Videos_Other_Unique[item] = struct{}{}
+				}
+
+				if !_EndDeviceModel_Videos_Other_Pattern.MatchString(item) {
+					return EndDeviceModel_VideosValidationError{
+						field:  fmt.Sprintf("other[%v]", idx),
+						reason: "value does not match regex pattern \"^(?:https?:\\\\/\\\\/(?:www\\\\.)?youtu(?:be\\\\.com\\\\/watch\\\\?v=|\\\\.be\\\\/)(?:[\\\\w\\\\-_]*)(?:&(amp;)?[\\\\w\\\\?=]*)?)$|^(?:https?:\\\\/\\\\/(?:www\\\\.)?vimeo\\\\.com\\\\/(?:channels\\\\/(?:\\\\w+\\\\/)?|groups\\\\/([^\\\\/]*)\\\\/videos\\\\/|)(?:\\\\d+)(?:|\\\\/\\\\?))$\"",
+					}
+				}
+
+			}
 
 		default:
 			return EndDeviceModel_VideosValidationError{
@@ -2626,6 +2942,10 @@ var _ interface {
 	ErrorName() string
 } = EndDeviceModel_VideosValidationError{}
 
+var _EndDeviceModel_Videos_Main_Pattern = regexp.MustCompile("^(?:https?:\\/\\/(?:www\\.)?youtu(?:be\\.com\\/watch\\?v=|\\.be\\/)(?:[\\w\\-_]*)(?:&(amp;)?[\\w\\?=]*)?)$|^(?:https?:\\/\\/(?:www\\.)?vimeo\\.com\\/(?:channels\\/(?:\\w+\\/)?|groups\\/([^\\/]*)\\/videos\\/|)(?:\\d+)(?:|\\/\\?))$")
+
+var _EndDeviceModel_Videos_Other_Pattern = regexp.MustCompile("^(?:https?:\\/\\/(?:www\\.)?youtu(?:be\\.com\\/watch\\?v=|\\.be\\/)(?:[\\w\\-_]*)(?:&(amp;)?[\\w\\?=]*)?)$|^(?:https?:\\/\\/(?:www\\.)?vimeo\\.com\\/(?:channels\\/(?:\\w+\\/)?|groups\\/([^\\/]*)\\/videos\\/|)(?:\\d+)(?:|\\/\\?))$")
+
 // ValidateFields checks the field values on EndDeviceModel_Reseller with the
 // rules defined in the proto definition for this message. If any rules are
 // violated, an error is returned.
@@ -2642,11 +2962,43 @@ func (m *EndDeviceModel_Reseller) ValidateFields(paths ...string) error {
 		_ = subs
 		switch name {
 		case "name":
-			// no validation rules for Name
+
+			if utf8.RuneCountInString(m.GetName()) > 100 {
+				return EndDeviceModel_ResellerValidationError{
+					field:  "name",
+					reason: "value length must be at most 100 runes",
+				}
+			}
+
 		case "region":
 
+			for idx, item := range m.GetRegion() {
+				_, _ = idx, item
+
+				if utf8.RuneCountInString(item) > 100 {
+					return EndDeviceModel_ResellerValidationError{
+						field:  fmt.Sprintf("region[%v]", idx),
+						reason: "value length must be at most 100 runes",
+					}
+				}
+
+			}
+
 		case "url":
-			// no validation rules for Url
+
+			if uri, err := url.Parse(m.GetUrl()); err != nil {
+				return EndDeviceModel_ResellerValidationError{
+					field:  "url",
+					reason: "value must be a valid URI",
+					cause:  err,
+				}
+			} else if !uri.IsAbs() {
+				return EndDeviceModel_ResellerValidationError{
+					field:  "url",
+					reason: "value must be absolute",
+				}
+			}
+
 		default:
 			return EndDeviceModel_ResellerValidationError{
 				field:  name,
@@ -2845,13 +3197,55 @@ func (m *EndDeviceModel_FirmwareVersion_Profile) ValidateFields(paths ...string)
 		_ = subs
 		switch name {
 		case "vendor_id":
-			// no validation rules for VendorId
+
+			if utf8.RuneCountInString(m.GetVendorId()) > 36 {
+				return EndDeviceModel_FirmwareVersion_ProfileValidationError{
+					field:  "vendor_id",
+					reason: "value length must be at most 36 runes",
+				}
+			}
+
+			if !_EndDeviceModel_FirmwareVersion_Profile_VendorId_Pattern.MatchString(m.GetVendorId()) {
+				return EndDeviceModel_FirmwareVersion_ProfileValidationError{
+					field:  "vendor_id",
+					reason: "value does not match regex pattern \"^$|^[a-z0-9](?:[-]?[a-z0-9]){2,}$\"",
+				}
+			}
+
 		case "profile_id":
-			// no validation rules for ProfileId
+
+			if utf8.RuneCountInString(m.GetProfileId()) > 36 {
+				return EndDeviceModel_FirmwareVersion_ProfileValidationError{
+					field:  "profile_id",
+					reason: "value length must be at most 36 runes",
+				}
+			}
+
+			if !_EndDeviceModel_FirmwareVersion_Profile_ProfileId_Pattern.MatchString(m.GetProfileId()) {
+				return EndDeviceModel_FirmwareVersion_ProfileValidationError{
+					field:  "profile_id",
+					reason: "value does not match regex pattern \"^$|^[a-z0-9](?:[-]?[a-z0-9]){2,}$\"",
+				}
+			}
+
 		case "lorawan_certified":
 			// no validation rules for LorawanCertified
 		case "codec_id":
-			// no validation rules for CodecId
+
+			if utf8.RuneCountInString(m.GetCodecId()) > 36 {
+				return EndDeviceModel_FirmwareVersion_ProfileValidationError{
+					field:  "codec_id",
+					reason: "value length must be at most 36 runes",
+				}
+			}
+
+			if !_EndDeviceModel_FirmwareVersion_Profile_CodecId_Pattern.MatchString(m.GetCodecId()) {
+				return EndDeviceModel_FirmwareVersion_ProfileValidationError{
+					field:  "codec_id",
+					reason: "value does not match regex pattern \"^$|^[a-z0-9](?:[-]?[a-z0-9]){2,}$\"",
+				}
+			}
+
 		default:
 			return EndDeviceModel_FirmwareVersion_ProfileValidationError{
 				field:  name,
@@ -2918,6 +3312,12 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = EndDeviceModel_FirmwareVersion_ProfileValidationError{}
+
+var _EndDeviceModel_FirmwareVersion_Profile_VendorId_Pattern = regexp.MustCompile("^$|^[a-z0-9](?:[-]?[a-z0-9]){2,}$")
+
+var _EndDeviceModel_FirmwareVersion_Profile_ProfileId_Pattern = regexp.MustCompile("^$|^[a-z0-9](?:[-]?[a-z0-9]){2,}$")
+
+var _EndDeviceModel_FirmwareVersion_Profile_CodecId_Pattern = regexp.MustCompile("^$|^[a-z0-9](?:[-]?[a-z0-9]){2,}$")
 
 // ValidateFields checks the field values on
 // EndDeviceModel_OperatingConditions_Limits with the rules defined in the
@@ -3041,13 +3441,41 @@ func (m *EndDeviceModel_Compliances_Compliance) ValidateFields(paths ...string) 
 		_ = subs
 		switch name {
 		case "body":
-			// no validation rules for Body
+
+			if utf8.RuneCountInString(m.GetBody()) > 50 {
+				return EndDeviceModel_Compliances_ComplianceValidationError{
+					field:  "body",
+					reason: "value length must be at most 50 runes",
+				}
+			}
+
 		case "norm":
-			// no validation rules for Norm
+
+			if utf8.RuneCountInString(m.GetNorm()) > 50 {
+				return EndDeviceModel_Compliances_ComplianceValidationError{
+					field:  "norm",
+					reason: "value length must be at most 50 runes",
+				}
+			}
+
 		case "standard":
-			// no validation rules for Standard
+
+			if utf8.RuneCountInString(m.GetStandard()) > 50 {
+				return EndDeviceModel_Compliances_ComplianceValidationError{
+					field:  "standard",
+					reason: "value length must be at most 50 runes",
+				}
+			}
+
 		case "version":
-			// no validation rules for Version
+
+			if utf8.RuneCountInString(m.GetVersion()) > 50 {
+				return EndDeviceModel_Compliances_ComplianceValidationError{
+					field:  "version",
+					reason: "value length must be at most 50 runes",
+				}
+			}
+
 		default:
 			return EndDeviceModel_Compliances_ComplianceValidationError{
 				field:  name,

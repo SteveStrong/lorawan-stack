@@ -2489,6 +2489,12 @@ and allows clients to claim end devices.
 | Field | Validations |
 | ----- | ----------- |
 | `brand_id` | <p>`string.max_len`: `36`</p><p>`string.pattern`: `^[a-z0-9](?:[-]?[a-z0-9]){2,}$`</p> |
+| `name` | <p>`string.max_len`: `100`</p> |
+| `organization_unique_identifiers` | <p>`repeated.items.string.pattern`: `[0-9A-F]{6}`</p> |
+| `lora_alliance_vendor_id` | <p>`uint32.lte`: `65535`</p><p>`uint32.gte`: `0`</p> |
+| `website` | <p>`string.uri`: `true`</p> |
+| `email` | <p>`string.email`: `true`</p> |
+| `logo` | <p>`string.pattern`: `^$|^(([a-z0-9-]+\/)+)?([a-z0-9_-]+\.)+(png|svg)$`</p> |
 
 ### <a name="ttn.lorawan.v3.EndDeviceModel">Message `EndDeviceModel`</a>
 
@@ -2522,8 +2528,14 @@ and allows clients to claim end devices.
 | ----- | ----------- |
 | `brand_id` | <p>`string.max_len`: `36`</p><p>`string.pattern`: `^[a-z0-9](?:[-]?[a-z0-9]){2,}$`</p> |
 | `model_id` | <p>`string.max_len`: `36`</p><p>`string.pattern`: `^[a-z0-9](?:[-]?[a-z0-9]){2,}$`</p> |
-| `name` | <p>`string.max_len`: `50`</p> |
+| `name` | <p>`string.max_len`: `100`</p> |
 | `description` | <p>`string.max_len`: `2000`</p> |
+| `ip_code` | <p>`string.pattern`: `^$|^IP[X0-6][X0-9]K?C?D?f?H?M?S?W?$`</p> |
+| `key_provisioning` | <p>`repeated.unique`: `true`</p><p>`repeated.items.enum.defined_only`: `true`</p> |
+| `key_security` | <p>`enum.defined_only`: `true`</p> |
+| `product_url` | <p>`string.uri`: `true`</p> |
+| `datasheet_url` | <p>`string.uri`: `true`</p> |
+| `additional_radios` | <p>`repeated.unique`: `true`</p><p>`repeated.items.string.max_len`: `50`</p> |
 
 ### <a name="ttn.lorawan.v3.EndDeviceModel.Battery">Message `EndDeviceModel.Battery`</a>
 
@@ -2531,6 +2543,12 @@ and allows clients to claim end devices.
 | ----- | ---- | ----- | ----------- |
 | `replaceable` | [`google.protobuf.BoolValue`](#google.protobuf.BoolValue) |  | Whether the device battery can be replaced. |
 | `type` | [`string`](#string) |  | Battery type. |
+
+#### Field Rules
+
+| Field | Validations |
+| ----- | ----------- |
+| `type` | <p>`string.max_len`: `100`</p> |
 
 ### <a name="ttn.lorawan.v3.EndDeviceModel.Compliances">Message `EndDeviceModel.Compliances`</a>
 
@@ -2547,6 +2565,15 @@ and allows clients to claim end devices.
 | `norm` | [`string`](#string) |  |  |
 | `standard` | [`string`](#string) |  |  |
 | `version` | [`string`](#string) |  |  |
+
+#### Field Rules
+
+| Field | Validations |
+| ----- | ----------- |
+| `body` | <p>`string.max_len`: `50`</p> |
+| `norm` | <p>`string.max_len`: `50`</p> |
+| `standard` | <p>`string.max_len`: `50`</p> |
+| `version` | <p>`string.max_len`: `50`</p> |
 
 ### <a name="ttn.lorawan.v3.EndDeviceModel.Dimensions">Message `EndDeviceModel.Dimensions`</a>
 
@@ -2566,6 +2593,13 @@ and allows clients to claim end devices.
 | `supported_hardware_versions` | [`string`](#string) | repeated | Hardware versions supported by this firmware version. |
 | `profiles` | [`EndDeviceModel.FirmwareVersion.ProfilesEntry`](#ttn.lorawan.v3.EndDeviceModel.FirmwareVersion.ProfilesEntry) | repeated | Device profiles for each supported region (band). |
 
+#### Field Rules
+
+| Field | Validations |
+| ----- | ----------- |
+| `version` | <p>`string.max_len`: `50`</p> |
+| `supported_hardware_versions` | <p>`repeated.items.string.max_len`: `50`</p> |
+
 ### <a name="ttn.lorawan.v3.EndDeviceModel.FirmwareVersion.Profile">Message `EndDeviceModel.FirmwareVersion.Profile`</a>
 
 | Field | Type | Label | Description |
@@ -2574,6 +2608,14 @@ and allows clients to claim end devices.
 | `profile_id` | [`string`](#string) |  | Profile identifier, as defined in the Device Repository. |
 | `lorawan_certified` | [`bool`](#bool) |  | Whether the device is LoRaWAN certified. |
 | `codec_id` | [`string`](#string) |  | Payload formatter codec identifier, as defined in the Device Repository. |
+
+#### Field Rules
+
+| Field | Validations |
+| ----- | ----------- |
+| `vendor_id` | <p>`string.max_len`: `36`</p><p>`string.pattern`: `^$|^[a-z0-9](?:[-]?[a-z0-9]){2,}$`</p> |
+| `profile_id` | <p>`string.max_len`: `36`</p><p>`string.pattern`: `^$|^[a-z0-9](?:[-]?[a-z0-9]){2,}$`</p> |
+| `codec_id` | <p>`string.max_len`: `36`</p><p>`string.pattern`: `^$|^[a-z0-9](?:[-]?[a-z0-9]){2,}$`</p> |
 
 ### <a name="ttn.lorawan.v3.EndDeviceModel.FirmwareVersion.ProfilesEntry">Message `EndDeviceModel.FirmwareVersion.ProfilesEntry`</a>
 
@@ -2589,6 +2631,13 @@ and allows clients to claim end devices.
 | `version` | [`string`](#string) |  | Hardware version string. |
 | `numeric` | [`uint32`](#uint32) |  | Numberic hardware revision number. |
 | `part_number` | [`string`](#string) |  | Hardware part number. |
+
+#### Field Rules
+
+| Field | Validations |
+| ----- | ----------- |
+| `version` | <p>`string.max_len`: `50`</p> |
+| `part_number` | <p>`string.max_len`: `50`</p> |
 
 ### <a name="ttn.lorawan.v3.EndDeviceModel.OperatingConditions">Message `EndDeviceModel.OperatingConditions`</a>
 
@@ -2611,6 +2660,13 @@ and allows clients to claim end devices.
 | `main` | [`string`](#string) |  | Main device photo. |
 | `other` | [`string`](#string) | repeated | List of other device photos. |
 
+#### Field Rules
+
+| Field | Validations |
+| ----- | ----------- |
+| `main` | <p>`string.pattern`: `^$|^(([a-z0-9-]+\/)+)?([a-z0-9_-]+\.)+(png|jpg|jpeg)$`</p> |
+| `other` | <p>`repeated.unique`: `true`</p><p>`repeated.items.string.pattern`: `^$|^(([a-z0-9-]+\/)+)?([a-z0-9_-]+\.)+(png|jpg|jpeg)$`</p> |
+
 ### <a name="ttn.lorawan.v3.EndDeviceModel.Reseller">Message `EndDeviceModel.Reseller`</a>
 
 | Field | Type | Label | Description |
@@ -2619,12 +2675,27 @@ and allows clients to claim end devices.
 | `region` | [`string`](#string) | repeated | Reseller regions. |
 | `url` | [`string`](#string) |  | Reseller URL. |
 
+#### Field Rules
+
+| Field | Validations |
+| ----- | ----------- |
+| `name` | <p>`string.max_len`: `100`</p> |
+| `region` | <p>`repeated.items.string.max_len`: `100`</p> |
+| `url` | <p>`string.uri`: `true`</p> |
+
 ### <a name="ttn.lorawan.v3.EndDeviceModel.Videos">Message `EndDeviceModel.Videos`</a>
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | `main` | [`string`](#string) |  | Link to main device video. |
 | `other` | [`string`](#string) | repeated | Links to other device videos. |
+
+#### Field Rules
+
+| Field | Validations |
+| ----- | ----------- |
+| `main` | <p>`string.pattern`: `^(?:https?:\/\/(?:www\.)?youtu(?:be\.com\/watch\?v=|\.be\/)(?:[\w\-_]*)(?:&(amp;)?[\w\?=]*)?)$|^(?:https?:\/\/(?:www\.)?vimeo\.com\/(?:channels\/(?:\w+\/)?|groups\/([^\/]*)\/videos\/|)(?:\d+)(?:|\/\?))$`</p> |
+| `other` | <p>`repeated.unique`: `true`</p><p>`repeated.items.string.pattern`: `^(?:https?:\/\/(?:www\.)?youtu(?:be\.com\/watch\?v=|\.be\/)(?:[\w\-_]*)(?:&(amp;)?[\w\?=]*)?)$|^(?:https?:\/\/(?:www\.)?vimeo\.com\/(?:channels\/(?:\w+\/)?|groups\/([^\/]*)\/videos\/|)(?:\d+)(?:|\/\?))$`</p> |
 
 ### <a name="ttn.lorawan.v3.GetEndDeviceBrandRequest">Message `GetEndDeviceBrandRequest`</a>
 
