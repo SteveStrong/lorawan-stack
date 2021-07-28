@@ -3473,6 +3473,15 @@
       "file": "grpc.go"
     }
   },
+  "error:pkg/devicerepository:missing_application_identifiers": {
+    "translations": {
+      "en": "missing application identifiers"
+    },
+    "description": {
+      "package": "pkg/devicerepository",
+      "file": "grpc.go"
+    }
+  },
   "error:pkg/devicerepository:model_not_found": {
     "translations": {
       "en": "model `{brand_id}/{model_id}` not found"
