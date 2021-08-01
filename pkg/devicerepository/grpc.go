@@ -61,13 +61,8 @@ func (dr *DeviceRepository) ensureBaseAssetURLs(models []*ttnpb.EndDeviceModel) 
 const defaultLimit = 1000
 
 func requireApplication(ctx context.Context, ids *ttnpb.ApplicationIdentifiers) error {
-	if ids == nil {
-		return errMissingApplicationIds.New()
-	}
 	return rights.RequireApplication(ctx, *ids, ttnpb.RIGHT_APPLICATION_DEVICES_READ)
 }
-
-var errMissingApplicationIds = errors.DefineInvalidArgument("missing_application_identifiers", "missing application identifiers")
 
 // ListBrands implements the ttnpb.DeviceRepositoryServer interface.
 func (dr *DeviceRepository) ListBrands(ctx context.Context, req *ttnpb.ListEndDeviceBrandsRequest) (*ttnpb.ListEndDeviceBrandsResponse, error) {

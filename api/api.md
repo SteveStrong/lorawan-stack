@@ -2709,6 +2709,7 @@ and allows clients to claim end devices.
 
 | Field | Validations |
 | ----- | ----------- |
+| `application_ids` | <p>`message.required`: `true`</p> |
 | `brand_id` | <p>`string.max_len`: `36`</p><p>`string.pattern`: `^[a-z0-9](?:[-]?[a-z0-9]){2,}$`</p> |
 
 ### <a name="ttn.lorawan.v3.GetEndDeviceModelRequest">Message `GetEndDeviceModelRequest`</a>
@@ -2724,6 +2725,7 @@ and allows clients to claim end devices.
 
 | Field | Validations |
 | ----- | ----------- |
+| `application_ids` | <p>`message.required`: `true`</p> |
 | `brand_id` | <p>`string.max_len`: `36`</p><p>`string.pattern`: `^[a-z0-9](?:[-]?[a-z0-9]){2,}$`</p> |
 | `model_id` | <p>`string.max_len`: `36`</p><p>`string.pattern`: `^[a-z0-9](?:[-]?[a-z0-9]){2,}$`</p> |
 
@@ -2735,12 +2737,24 @@ and allows clients to claim end devices.
 | `version_ids` | [`EndDeviceVersionIdentifiers`](#ttn.lorawan.v3.EndDeviceVersionIdentifiers) |  | End device version information. |
 | `field_mask` | [`google.protobuf.FieldMask`](#google.protobuf.FieldMask) |  | Field mask paths. |
 
+#### Field Rules
+
+| Field | Validations |
+| ----- | ----------- |
+| `application_ids` | <p>`message.required`: `true`</p> |
+
 ### <a name="ttn.lorawan.v3.GetTemplateRequest">Message `GetTemplateRequest`</a>
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | `application_ids` | [`ApplicationIdentifiers`](#ttn.lorawan.v3.ApplicationIdentifiers) |  | Application identifiers. |
 | `version_ids` | [`EndDeviceVersionIdentifiers`](#ttn.lorawan.v3.EndDeviceVersionIdentifiers) |  | End device version information. |
+
+#### Field Rules
+
+| Field | Validations |
+| ----- | ----------- |
+| `application_ids` | <p>`message.required`: `true`</p> |
 
 ### <a name="ttn.lorawan.v3.ListEndDeviceBrandsRequest">Message `ListEndDeviceBrandsRequest`</a>
 
@@ -2757,6 +2771,7 @@ and allows clients to claim end devices.
 
 | Field | Validations |
 | ----- | ----------- |
+| `application_ids` | <p>`message.required`: `true`</p> |
 | `limit` | <p>`uint32.lte`: `1000`</p> |
 | `order_by` | <p>`string.in`: `[ brand_id -brand_id name -name]`</p> |
 | `search` | <p>`string.max_len`: `100`</p> |
@@ -2783,6 +2798,7 @@ and allows clients to claim end devices.
 
 | Field | Validations |
 | ----- | ----------- |
+| `application_ids` | <p>`message.required`: `true`</p> |
 | `brand_id` | <p>`string.max_len`: `36`</p><p>`string.pattern`: `^([a-z0-9](?:[-]?[a-z0-9]){2,}|)?$`</p> |
 | `limit` | <p>`uint32.lte`: `1000`</p> |
 | `order_by` | <p>`string.in`: `[ brand_id -brand_id model_id -model_id name -name]`</p> |
